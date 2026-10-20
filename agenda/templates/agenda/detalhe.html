@@ -6,7 +6,11 @@
 <div class="card mb-3">
     <div class="card-body">
         <p class="mb-1"><strong>Data/Hora:</strong> {{ aula.data_hora_inicio|date:"d/m/Y H:i" }} — {{ aula.data_hora_fim|date:"H:i" }}</p>
+        <p class="mb-1"><strong>Duração:</strong> {{ aula.duracao_minutos }} min</p>
         <p class="mb-1"><strong>Modalidade:</strong> {{ aula.get_modalidade_display }}</p>
+        {% if aula.local %}
+            <p class="mb-1"><strong>Local:</strong> {{ aula.local }}</p>
+        {% endif %}
         <p class="mb-1"><strong>Status:</strong> {{ aula.get_status_display }}</p>
         {% if aula.conteudo_trabalhado %}
             <p class="mb-1"><strong>Conteúdo trabalhado:</strong> {{ aula.conteudo_trabalhado }}</p>
@@ -23,7 +27,8 @@
     </div>
 </div>
 
-{% if aula.status == "AGENDADA" %}
+{% if aula.pode_editar %}
+<a href="{% url 'agenda:editar' aula.pk %}" class="btn btn-outline-primary">Editar informações</a>
 <a href="{% url 'agenda:registrar' aula.pk %}" class="btn btn-success">Registrar como realizada</a>
 <a href="{% url 'agenda:registrar_falta' aula.pk %}" class="btn btn-warning">Registrar falta</a>
 {% endif %}

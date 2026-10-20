@@ -1,41 +1,91 @@
 {% extends "base.html" %}
 {% block title %}Agenda — AulaCerta{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Agenda de aulas</h2>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="mb-0">Agenda de aulas</h2>
     <a href="{% url 'agenda:criar' %}" class="btn btn-primary">+ Agendar aula</a>
 </div>
 
-<table class="table table-striped bg-white shadow-sm">
-    <thead>
-        <tr>
-            <th>Data/Hora</th>
-            <th>Aluno</th>
-            <th>Modalidade</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for aula in aulas %}
-        <tr>
-            <td>{{ aula.data_hora_inicio|date:"d/m/Y H:i" }}</td>
-            <td>{{ aula.aluno.nome }}</td>
-            <td>{{ aula.get_modalidade_display }}</td>
-            <td>
-                <span class="badge
-                    {% if aula.status == 'REALIZADA' %}bg-success
-                    {% elif aula.status == 'CANCELADA' %}bg-secondary
-                    {% elif aula.status == 'FALTA' %}bg-warning text-dark
-                    {% else %}bg-primary{% endif %}">
-                    {{ aula.get_status_display }}
-                </span>
-            </td>
-            <td><a href="{% url 'agenda:detalhe' aula.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-center text-muted">Nenhuma aula agendada.</td></tr>
+<div class="agenda-toolbar">
+    <nav class="btn-group" aria-label="Visão da agenda">
+        {% for v in visoes %}
+        <a href="{{ v.url }}" class="btn btn-sm {% if v.ativa %}btn-primary{% else %}btn-outline-primary{% endif %}"{% if v.ativa %} aria-current="page"{% endif %}>{{ v.rotulo }}</a>
         {% endfor %}
-    </tbody>
-</table>
+    </nav>
+
+    <div class="agenda-periodo">
+        <a href="{{ url_anterior }}" class="btn btn-sm btn-outline-secondary" aria-label="Período anterior">&larr;</a>
+        <span class="agenda-periodo__titulo" aria-live="polite">
+            {% if visao == "dia" %}{{ data|date:"l, j \d\e F \d\e Y"|lower|capfirst }}{% elif visao == "semana" %}{{ inicio|date:"j \d\e F"|lower }} a {{ fim|date:"j \d\e F \d\e Y"|lower }}{% else %}{{ data|date:"F \d\e Y"|lower|capfirst }}{% endif %}
+        </span>
+        <a href="{{ url_proxima }}" class="btn btn-sm btn-outline-secondary" aria-label="Próximo período">&rarr;</a>
+        <a href="{{ url_hoje }}" class="btn btn-sm btn-outline-secondary">Hoje</a>
+    </div>
+</div>
+
+<nav class="agenda-filtros" aria-label="Filtrar por status">
+    {% for f in filtros_status %}
+    <a href="{{ f.url }}"
+       class="filtro-status{% if f.valor %} aula--{{ f.valor|lower }}{% endif %}{% if f.ativo %} is-ativo{% endif %}"
+       {% if f.ativo %}aria-current="true"{% endif %}>{{ f.rotulo }}</a>
+    {% endfor %}
+</nav>
+
+{% if total_aulas == 0 %}
+<p class="agenda-vazio" role="status">
+    Nenhuma aula {% if status_selecionado %}com esse status {% endif %}neste período.
+</p>
+{% endif %}
+
+{% if visao == "dia" %}
+    {% for d in dias %}
+    <section class="agenda-dia-lista" aria-label="Aulas do dia">
+        {% for aula in d.aulas %}
+            {% include "agenda/_aula_chip.html" with aula=aula detalhado=True %}
+        {% endfor %}
+    </section>
+    {% endfor %}
+
+{% elif visao == "semana" %}
+    <div class="agenda-semana">
+        {% for d in dias %}
+        <section class="agenda-dia{% if d.hoje %} is-hoje{% endif %}" aria-labelledby="dia-{{ d.data|date:'Y-m-d' }}">
+            <h3 class="agenda-dia__titulo" id="dia-{{ d.data|date:'Y-m-d' }}">
+                <a href="{{ d.url_dia }}">{{ d.data|date:"D"|capfirst }}, {{ d.data|date:"d/m" }}</a>
+            </h3>
+            {% for aula in d.aulas %}
+                {% include "agenda/_aula_chip.html" with aula=aula %}
+            {% empty %}
+                <p class="agenda-dia__vazio">Sem aulas</p>
+            {% endfor %}
+        </section>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <div class="agenda-mes-wrap">
+        <table class="agenda-mes">
+            <thead>
+                <tr>
+                    {% for nome in dias_da_semana %}<th scope="col">{{ nome }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for semana in semanas %}
+                <tr>
+                    {% for c in semana %}
+                    <td class="{% if not c.no_mes %}is-fora{% endif %}{% if c.hoje %} is-hoje{% endif %}">
+                        <a class="agenda-mes__num" href="{{ c.url_dia }}"
+                           aria-label="{{ c.data|date:'j \d\e F' }}">{{ c.data|date:"j" }}</a>
+                        {% for aula in c.aulas %}
+                            {% include "agenda/_aula_chip.html" with aula=aula compacto=True %}
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
 {% endblock %}

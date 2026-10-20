@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import AgendamentoForm, RegistrarAulaForm, RegistrarFaltaForm
+from . import visoes
+from .forms import AgendamentoForm, EditarAulaForm, RegistrarAulaForm, RegistrarFaltaForm
 from .models import Aula
 
 
@@ -23,23 +24,63 @@ def criar_agendamento(request):
     else:
         form = AgendamentoForm(professor=request.user)
 
-    return render(request, "agenda/form.html", {"form": form, "titulo": "Agendar aula"})
+    return render(
+        request,
+        "agenda/form.html",
+        {"form": form, "titulo": "Agendar aula", "botao": "Agendar"},
+    )
 
 
 @login_required
 def listar_agenda(request):
-    """US-30337 — Consultar agenda de aulas (visão simples em lista, Sprint 01)."""
-    aulas = Aula.objects.filter(professor=request.user).select_related("aluno")
-    status = request.GET.get("status")
-    if status:
-        aulas = aulas.filter(status=status)
-    return render(request, "agenda/lista.html", {"aulas": aulas, "status_selecionado": status})
+    """
+    US-30337 — Consultar agenda de aulas (visões diária, semanal e mensal).
+
+    Parâmetros (todos opcionais): visao=dia|semana|mes, data=AAAA-MM-DD,
+    status=AGENDADA|REALIZADA|CANCELADA|FALTA. A lógica fica em agenda/visoes.py.
+    """
+    visao, data, status = visoes.interpretar_parametros(request.GET)
+    contexto = visoes.montar_contexto(request.user, visao, data, status)
+    return render(request, "agenda/lista.html", contexto)
 
 
 @login_required
 def detalhe_aula(request, pk):
     aula = get_object_or_404(Aula, pk=pk, professor=request.user)
     return render(request, "agenda/detalhe.html", {"aula": aula})
+
+
+@login_required
+def editar_aula(request, pk):
+    """
+    US-30333 — Definir informações da aula agendada.
+
+    CA-DEF-03: só aulas AGENDADAS são editáveis; para as demais, o professor
+    é avisado e devolvido à ficha da aula, sem nenhuma alteração.
+    """
+    aula = get_object_or_404(Aula, pk=pk, professor=request.user)
+
+    if not aula.pode_editar:
+        messages.warning(
+            request,
+            "Somente aulas com status Agendada podem ser editadas.",
+        )
+        return redirect("agenda:detalhe", pk=aula.pk)
+
+    if request.method == "POST":
+        form = EditarAulaForm(request.POST, instance=aula)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Informações da aula atualizadas.")
+            return redirect("agenda:detalhe", pk=aula.pk)
+    else:
+        form = EditarAulaForm(instance=aula)
+
+    return render(
+        request,
+        "agenda/form.html",
+        {"form": form, "aula": aula, "titulo": "Editar aula", "botao": "Salvar alterações"},
+    )
 
 
 @login_required

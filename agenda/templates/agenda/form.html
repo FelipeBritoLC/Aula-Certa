@@ -1,38 +1,60 @@
 {% extends "base.html" %}
 {% block title %}{{ titulo }} — AulaCerta{% endblock %}
 {% block content %}
-<h2 class="mb-4">{{ titulo }}</h2>
+<h2 class="mb-2">{{ titulo }}</h2>
+{% if aula %}
+<p class="text-muted mb-4">
+    Aluno: <strong>{{ aula.aluno.nome }}</strong> ·
+    Status: {{ aula.get_status_display }}
+</p>
+{% else %}
+<div class="mb-4"></div>
+{% endif %}
 
 <form method="post" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
     <div class="row g-3">
+        {% if "aluno" in form.fields %}
         <div class="col-md-6">
-            <label class="form-label">Aluno *</label>
+            <label class="form-label" for="{{ form.aluno.id_for_label }}">Aluno *</label>
             {{ form.aluno }}
             <div class="text-danger small">{{ form.aluno.errors }}</div>
         </div>
-        <div class="col-md-3">
-            <label class="form-label">Modalidade</label>
-            {{ form.modalidade }}
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Duração (min)</label>
-            {{ form.duracao_minutos }}
-        </div>
+        {% endif %}
         <div class="col-md-6">
-            <label class="form-label">Data e horário de início *</label>
+            <label class="form-label" for="{{ form.data_hora_inicio.id_for_label }}">Data e horário de início *</label>
             {{ form.data_hora_inicio }}
             <div class="text-danger small">{{ form.data_hora_inicio.errors }}</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="{{ form.duracao_minutos.id_for_label }}">Duração (min) *</label>
+            {{ form.duracao_minutos }}
+            <div class="text-danger small">{{ form.duracao_minutos.errors }}</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="{{ form.modalidade.id_for_label }}">Modalidade</label>
+            {{ form.modalidade }}
+            <div class="text-danger small">{{ form.modalidade.errors }}</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="{{ form.local.id_for_label }}">Local ou link da aula</label>
+            {{ form.local }}
+            <div class="form-text">Endereço, se presencial; link ou plataforma, se online.</div>
+            <div class="text-danger small">{{ form.local.errors }}</div>
         </div>
     </div>
 
     <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Agendar</button>
+        <button type="submit" class="btn btn-primary">{{ botao|default:"Salvar" }}</button>
+        {% if aula %}
+        <a href="{% url 'agenda:detalhe' aula.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        {% else %}
         <a href="{% url 'agenda:listar' %}" class="btn btn-outline-secondary">Cancelar</a>
+        {% endif %}
     </div>
 </form>
 {% endblock %}

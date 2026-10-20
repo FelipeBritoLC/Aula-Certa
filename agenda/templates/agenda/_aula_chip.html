@@ -1,0 +1,11 @@
+{# Uma aula na agenda: horário, aluno e status (cor + ícone + texto — CA-CAG-02). #}
+<a class="aula-chip aula--{{ aula.status|lower }}"
+   href="{% url 'agenda:detalhe' aula.pk %}"
+   title="{{ aula.aluno.nome }} — {{ aula.get_status_display }}">
+    <span class="aula-chip__hora">{{ aula.data_hora_inicio|time:"H:i" }}{% if not compacto %}–{{ aula.data_hora_fim|time:"H:i" }}{% endif %}</span>
+    <span class="aula-chip__aluno">{{ aula.aluno.nome }}</span>
+    <span class="aula-chip__status{% if compacto %} visually-hidden{% endif %}">{{ aula.get_status_display }}</span>
+    {% if detalhado %}
+    <span class="aula-chip__meta">{{ aula.get_modalidade_display }}{% if aula.local %} · {{ aula.local }}{% endif %}</span>
+    {% endif %}
+</a>

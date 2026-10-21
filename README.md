@@ -1,7 +1,7 @@
-# AulaCerta — Sprint 01
+# AulaCerta — Sprints 01 e 02
 
 Plataforma de gestão para professores particulares. Este código-fonte
-implementa as user stories planejadas para a **Sprint 01** do projeto
+implementa as user stories planejadas para as **Sprints 01 e 02** do projeto
 (ver `Backlog_geral` e `Proposta de Projeto`):
 
 | US (OpenProject) | Funcionalidade                              | Onde está |
@@ -15,6 +15,12 @@ implementa as user stories planejadas para a **Sprint 01** do projeto
 | 30344 | Registrar pagamento do aluno | `financeiro/` |
 | 30350 | Identificar alunos inadimplentes | `financeiro/` |
 | 30355 | Visualizar indicadores do sistema | `dashboard/` |
+| 30325 | Alterar dados do aluno *(Sprint 02)* | `alunos/views.py: editar_aluno` |
+| 30322 | Informar dados complementares do aluno *(Sprint 02)* | `alunos/models.py`, ficha do aluno |
+| 30333 | Definir informações da aula agendada *(Sprint 02)* | `agenda/` (edição de aula) |
+| 30337 | Consultar agenda de aulas *(Sprint 02)* | `agenda/visoes.py` |
+| 30339 | Informar detalhes da aula realizada *(Sprint 02)* | `agenda/` (`/agenda/<pk>/detalhes/`) |
+| 30358 | Realizar testes da aplicação *(Sprint 02)* | `docs/testes/`, `tests/`, `.github/workflows/ci.yml` |
 
 ## Stack
 
@@ -152,9 +158,16 @@ conforme definido na Proposta de Projeto (item 5.7). Arquivos relevantes:
 ## Rodando os testes automatizados
 
 ```bash
-export USE_SQLITE=True SECRET_KEY=teste
+export USE_SQLITE=True SECRET_KEY=teste DEBUG=True
 python -m pytest -v
+python -m pytest --cov            # com relatório de cobertura (Task 32586)
 ```
+
+A cobertura atual e a meta de 60% em Agenda/Financeiro estão em
+`docs/testes/cobertura-sprint02.md`; o roteiro do ciclo funcional ponta
+a ponta (Task 32589) está em `docs/testes/ciclo-funcional-sprint02.md`.
+O CI (`.github/workflows/ci.yml`) roda a suíte contra PostgreSQL 16 a
+cada push e pull request na `main`.
 
 Os testes cobrem os critérios de aceite (CA-*) e os cenários BDD
 descritos no backlog para cada User Story da Sprint 01:

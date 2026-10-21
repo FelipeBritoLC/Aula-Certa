@@ -1,0 +1,81 @@
+# US-30358 / Task 32588 — Integração contínua.
+#
+# A cada push ou pull request na main: sobe um PostgreSQL 16 (mesmo banco
+# da homologação), aplica as migrations, roda a suíte inteira com medição
+# de cobertura e falha se a cobertura dos módulos Agenda e Financeiro ficar
+# abaixo de 60% (critério de sucesso da Proposta de Projeto, seção 3).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes e cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aulacerta
+          POSTGRES_USER: aulacerta
+          POSTGRES_PASSWORD: aulacerta
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aulacerta"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://aulacerta:aulacerta@localhost:5432/aulacerta
+      SECRET_KEY: chave-somente-para-o-ci
+      # Com DEBUG=False o settings liga o redirecionamento HTTPS e o storage
+      # com manifest do WhiteNoise (exige collectstatic), que são do deploy,
+      # não da suíte de testes.
+      DEBUG: "True"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Verificar configuração do Django
+        run: python manage.py check
+
+      - name: Verificar migrations pendentes
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Aplicar migrations
+        run: python manage.py migrate --no-input
+
+      - name: Rodar testes com cobertura
+        run: pytest --cov --cov-report=term --cov-report=xml
+
+      - name: Exigir 60% de cobertura em Agenda e Financeiro
+        run: coverage report --include="agenda/*,financeiro/*" --fail-under=60
+
+      - name: Publicar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: coverage.xml
+          if-no-files-found: ignore

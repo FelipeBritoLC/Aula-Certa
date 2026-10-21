@@ -32,23 +32,64 @@ def cadastrar_aluno(request):
 
 @login_required
 def editar_aluno(request, pk):
-    """US-30325 — Alterar dados do aluno (Sprint 02, disponibilizada por reuso do form)."""
+    """
+    US-30325 — Alterar dados do aluno.
+
+    CA-ALT-01 (Task 32576): as mesmas regras do cadastro valem na alteração —
+              CPF único por professor e nome, CPF e telefone obrigatórios
+              (Aluno.clean()).
+    CA-ALT-02 (Task 32577): inativar o aluno mantém as aulas que ele já tinha,
+              mas bloqueia novos agendamentos (CA-AGE-02 em Aula.clean() e
+              o filtro de alunos ativos no formulário de agendamento). O
+              professor é avisado de quantas aulas futuras continuam agendadas.
+    """
     aluno = get_object_or_404(Aluno, pk=pk, professor=request.user)
+    estava_ativo = aluno.is_ativo()
+
     if request.method == "POST":
         form = AlunoForm(request.POST, instance=aluno, professor=request.user)
         if form.is_valid():
             try:
-                form.save()
+                aluno = form.save()
             except ValidationError as exc:
                 for field, errs in exc.message_dict.items():
                     for err in errs:
                         form.add_error(field if field in form.fields else None, err)
             else:
                 messages.success(request, "Dados do aluno atualizados.")
+                if estava_ativo and not aluno.is_ativo():
+                    _avisar_inativacao(request, aluno)
                 return redirect("alunos:detalhe", pk=aluno.pk)
     else:
         form = AlunoForm(instance=aluno, professor=request.user)
-    return render(request, "alunos/form.html", {"form": form, "titulo": "Editar aluno"})
+
+    return render(
+        request,
+        "alunos/form.html",
+        {
+            "form": form,
+            "aluno": aluno,
+            "titulo": f"Editar aluno — {aluno.nome}",
+            "aulas_futuras": aluno.aulas_futuras_agendadas().count(),
+        },
+    )
+
+
+def _avisar_inativacao(request, aluno):
+    """Task 32577 — informa as consequências da inativação."""
+    futuras = aluno.aulas_futuras_agendadas().count()
+    if futuras:
+        messages.warning(
+            request,
+            f"Aluno inativado. Ele ainda tem {futuras} aula(s) agendada(s), que foram "
+            "mantidas — cancele-as na agenda, se for o caso. Novos agendamentos "
+            "para este aluno estão bloqueados.",
+        )
+    else:
+        messages.info(
+            request,
+            "Aluno inativado. Novos agendamentos para este aluno estão bloqueados.",
+        )
 
 
 @login_required

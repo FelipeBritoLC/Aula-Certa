@@ -27,7 +27,8 @@ class AlunoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self._professor = professor
         for field in self.fields.values():
-            field.widget.attrs.setdefault("class", "form-control")
+            classe = "form-select" if isinstance(field.widget, forms.Select) else "form-control"
+            field.widget.attrs.setdefault("class", classe)
 
     def save(self, commit=True):
         aluno = super().save(commit=False)

@@ -6,6 +6,10 @@
     <a href="{% url 'alunos:editar' aluno.pk %}" class="btn btn-outline-primary">Editar</a>
 </div>
 
+{% if not aluno.is_ativo %}
+<div class="alert alert-secondary">Aluno inativo — novos agendamentos estão bloqueados. As aulas já agendadas foram mantidas.</div>
+{% endif %}
+
 <div class="row">
     <div class="col-md-6">
         <div class="card mb-3">

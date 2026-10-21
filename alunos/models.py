@@ -3,6 +3,7 @@ import re
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 def validar_cpf_formato(value):
@@ -110,3 +111,13 @@ class Aluno(models.Model):
 
     def is_ativo(self):
         return self.situacao == self.Situacao.ATIVO
+
+    def aulas_futuras_agendadas(self):
+        """
+        Task 32577 — aulas ainda AGENDADAS a partir de agora.
+
+        Usado para avisar o professor ao inativar o aluno: essas aulas são
+        mantidas (CA-ALT-02), mas novos agendamentos ficam bloqueados
+        (CA-AGE-02).
+        """
+        return self.aulas.filter(status="AGENDADA", data_hora_inicio__gte=timezone.now())

@@ -1,0 +1,8 @@
+<div class="{{ col|default:'col-md-6' }}">
+    <label class="form-label" for="{{ campo.id_for_label }}">{{ rotulo }}</label>
+    {{ campo }}
+    {% if ajuda %}<div class="form-text">{{ ajuda }}</div>{% endif %}
+    {% for erro in campo.errors %}
+        <div class="text-danger small">{{ erro }}</div>
+    {% endfor %}
+</div>

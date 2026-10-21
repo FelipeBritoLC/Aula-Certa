@@ -9,80 +9,46 @@
         <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
 
+    <h5 class="mt-2 mb-3">Dados pessoais</h5>
     <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label">Nome *</label>
-            {{ form.nome }}
-            <div class="text-danger small">{{ form.nome.errors }}</div>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">CPF *</label>
-            {{ form.cpf }}
-            <div class="text-danger small">{{ form.cpf.errors }}</div>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Situação</label>
-            {{ form.situacao }}
-        </div>
+        {% include "alunos/_campo.html" with campo=form.nome rotulo="Nome *" col="col-md-6" %}
+        {% include "alunos/_campo.html" with campo=form.cpf rotulo="CPF *" col="col-md-3" %}
+        {% if aluno and aulas_futuras and aluno.is_ativo %}
+            {% include "alunos/_campo.html" with campo=form.situacao rotulo="Situação" col="col-md-3" ajuda="Ao inativar, as aulas já agendadas são mantidas e novos agendamentos ficam bloqueados." %}
+        {% else %}
+            {% include "alunos/_campo.html" with campo=form.situacao rotulo="Situação" col="col-md-3" %}
+        {% endif %}
 
-        <div class="col-md-4">
-            <label class="form-label">Telefone (contato) *</label>
-            {{ form.telefone }}
-            <div class="text-danger small">{{ form.telefone.errors }}</div>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">E-mail</label>
-            {{ form.email }}
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Data de nascimento</label>
-            {{ form.data_nascimento }}
-        </div>
+        {% include "alunos/_campo.html" with campo=form.telefone rotulo="Telefone (contato) *" col="col-md-4" %}
+        {% include "alunos/_campo.html" with campo=form.email rotulo="E-mail" col="col-md-4" %}
+        {% include "alunos/_campo.html" with campo=form.data_nascimento rotulo="Data de nascimento" col="col-md-4" %}
+        {% include "alunos/_campo.html" with campo=form.endereco rotulo="Endereço" col="col-md-9" %}
+        {% include "alunos/_campo.html" with campo=form.valor_hora rotulo="Valor-hora (R$)" col="col-md-3" %}
+    </div>
 
-        <div class="col-md-6">
-            <label class="form-label">Disciplina</label>
-            {{ form.disciplina }}
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Série/nível</label>
-            {{ form.serie_nivel }}
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Escola</label>
-            {{ form.escola }}
-        </div>
+    <h5 class="mt-4 mb-3">Dados acadêmicos</h5>
+    <div class="row g-3">
+        {% include "alunos/_campo.html" with campo=form.disciplina rotulo="Disciplina" col="col-md-6" %}
+        {% include "alunos/_campo.html" with campo=form.serie_nivel rotulo="Série/nível" col="col-md-3" %}
+        {% include "alunos/_campo.html" with campo=form.escola rotulo="Escola" col="col-md-3" %}
+        {% include "alunos/_campo.html" with campo=form.observacoes rotulo="Observações" col="col-12" %}
+    </div>
 
-        <div class="col-md-4">
-            <label class="form-label">Nome do responsável</label>
-            {{ form.responsavel_nome }}
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Telefone do responsável</label>
-            {{ form.responsavel_telefone }}
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">E-mail do responsável</label>
-            {{ form.responsavel_email }}
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Parentesco</label>
-            {{ form.responsavel_parentesco }}
-        </div>
-
-        <div class="col-md-3">
-            <label class="form-label">Valor-hora (R$)</label>
-            {{ form.valor_hora }}
-        </div>
-
-        <div class="col-12">
-            <label class="form-label">Observações</label>
-            {{ form.observacoes }}
-        </div>
+    <h5 class="mt-4 mb-3">Responsável</h5>
+    <div class="row g-3">
+        {% include "alunos/_campo.html" with campo=form.responsavel_nome rotulo="Nome do responsável" col="col-md-4" %}
+        {% include "alunos/_campo.html" with campo=form.responsavel_telefone rotulo="Telefone do responsável" col="col-md-3" %}
+        {% include "alunos/_campo.html" with campo=form.responsavel_email rotulo="E-mail do responsável" col="col-md-3" %}
+        {% include "alunos/_campo.html" with campo=form.responsavel_parentesco rotulo="Parentesco" col="col-md-2" %}
     </div>
 
     <div class="mt-4">
         <button type="submit" class="btn btn-primary">Salvar</button>
-        <a href="{% url 'alunos:listar' %}" class="btn btn-outline-secondary">Cancelar</a>
+        {% if aluno %}
+            <a href="{% url 'alunos:detalhe' aluno.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        {% else %}
+            <a href="{% url 'alunos:listar' %}" class="btn btn-outline-secondary">Cancelar</a>
+        {% endif %}
     </div>
 </form>
 {% endblock %}

@@ -76,5 +76,28 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Histórico de aulas realizadas
+            {% if total_aulas_realizadas %}<small class="text-muted">— últimas {{ historico_aulas|length }} de {{ total_aulas_realizadas }}</small>{% endif %}
+        </h5>
+        {% for aula in historico_aulas %}
+            <div class="border-top pt-3 mt-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <a href="{% url 'agenda:detalhe' aula.pk %}"><strong>{{ aula.data_hora_inicio|date:"d/m/Y H:i" }}</strong></a>
+                    {% if aula.avaliacao_desempenho %}
+                        <span class="badge text-bg-light border">Desempenho: {{ aula.get_avaliacao_desempenho_display }}</span>
+                    {% endif %}
+                </div>
+                <p class="mb-1 mt-1">{{ aula.conteudo_trabalhado|truncatechars:200 }}</p>
+                {% if aula.material_utilizado %}<p class="mb-1 small"><strong>Material:</strong> {{ aula.material_utilizado }}</p>{% endif %}
+                {% if aula.recomendacoes %}<p class="mb-0 small"><strong>Recomendações:</strong> {{ aula.recomendacoes }}</p>{% endif %}
+            </div>
+        {% empty %}
+            <p class="text-muted mb-0">Nenhuma aula realizada ainda.</p>
+        {% endfor %}
+    </div>
+</div>
+
 <a href="{% url 'alunos:listar' %}" class="btn btn-link">&larr; Voltar para a lista</a>
 {% endblock %}

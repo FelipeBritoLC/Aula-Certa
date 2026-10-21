@@ -29,6 +29,14 @@ class Aula(models.Model):
                (CA-AGE-01).
     CA-DEF-03: aulas REALIZADA, CANCELADA ou FALTA não podem ter essas
                informações alteradas.
+
+    US-30339 "Informar detalhes da aula realizada":
+    CA-DET-01: material utilizado, avaliação de desempenho e recomendações
+               são opcionais e podem ser informados ao registrar a aula ou
+               depois, pela tela de detalhes.
+    CA-DET-02: esses detalhes só podem ser informados em aulas REALIZADA.
+    CA-DET-03: os detalhes aparecem na página da aula e no histórico da
+               ficha do aluno.
     """
 
     # Campos que compõem as "informações da aula" (CA-DEF-01/03).
@@ -43,6 +51,15 @@ class Aula(models.Model):
         REALIZADA = "REALIZADA", "Realizada"
         CANCELADA = "CANCELADA", "Cancelada"
         FALTA = "FALTA", "Falta"
+
+    class Avaliacao(models.TextChoices):
+        INSATISFATORIO = "INSATISFATORIO", "Insatisfatório"
+        REGULAR = "REGULAR", "Regular"
+        BOM = "BOM", "Bom"
+        OTIMO = "OTIMO", "Ótimo"
+
+    # US-30339: detalhes complementares, só para aulas REALIZADAS (CA-DET-02).
+    CAMPOS_DETALHES = ("material_utilizado", "avaliacao_desempenho", "recomendacoes")
 
     professor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="aulas"
@@ -67,6 +84,18 @@ class Aula(models.Model):
     tipo_falta = models.CharField(
         max_length=20, blank=True,
         help_text="JUSTIFICADA ou NAO_JUSTIFICADA, quando status = FALTA.",
+    )
+
+    # US-30339 / Task 32581 — detalhes complementares da aula realizada
+    material_utilizado = models.TextField(
+        blank=True, help_text="Livros, listas de exercícios, links ou recursos usados na aula."
+    )
+    avaliacao_desempenho = models.CharField(
+        max_length=15, choices=Avaliacao.choices, blank=True,
+        help_text="Avaliação do desempenho do aluno nesta aula.",
+    )
+    recomendacoes = models.TextField(
+        blank=True, help_text="Tarefas, revisões ou orientações para as próximas aulas."
     )
 
     motivo_cancelamento = models.CharField(max_length=255, blank=True)
@@ -171,10 +200,27 @@ class Aula(models.Model):
                     "O conteúdo ministrado deve ter pelo menos 50 caracteres."
                 )
 
+        # CA-DET-02: detalhes complementares só em aulas realizadas
+        if self.status != self.Status.REALIZADA and self.tem_detalhes:
+            erros.setdefault(NON_FIELD_ERRORS, []).append(
+                "Material, avaliação e recomendações só podem ser informados em aulas realizadas."
+            )
+
         if erros:
             raise ValidationError(erros)
 
-    def registrar_como_realizada(self, conteudo_trabalhado, observacoes=""):
+    @property
+    def tem_detalhes(self):
+        return any(getattr(self, campo) for campo in self.CAMPOS_DETALHES)
+
+    def registrar_como_realizada(
+        self,
+        conteudo_trabalhado,
+        observacoes="",
+        material_utilizado="",
+        avaliacao_desempenho="",
+        recomendacoes="",
+    ):
         """Task 31621 — Registrar aula realizada (CA-REG-02)."""
         if self.status != self.Status.AGENDADA:
             raise ValidationError(
@@ -194,6 +240,9 @@ class Aula(models.Model):
         self.status = self.Status.REALIZADA
         self.conteudo_trabalhado = conteudo_trabalhado
         self.observacoes = (observacoes or "").strip()
+        self.material_utilizado = (material_utilizado or "").strip()
+        self.avaliacao_desempenho = avaliacao_desempenho or ""
+        self.recomendacoes = (recomendacoes or "").strip()
         self.data_registro = timezone.now()
         self.full_clean()
         self.save(
@@ -201,6 +250,7 @@ class Aula(models.Model):
                 "status",
                 "conteudo_trabalhado",
                 "observacoes",
+                *self.CAMPOS_DETALHES,
                 "data_registro",
                 "updated_at",
             ]

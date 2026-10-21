@@ -4,7 +4,13 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from . import visoes
-from .forms import AgendamentoForm, EditarAulaForm, RegistrarAulaForm, RegistrarFaltaForm
+from .forms import (
+    AgendamentoForm,
+    DetalhesAulaForm,
+    EditarAulaForm,
+    RegistrarAulaForm,
+    RegistrarFaltaForm,
+)
 from .models import Aula
 
 
@@ -99,6 +105,9 @@ def registrar_aula_realizada(request, pk):
                 aula.registrar_como_realizada(
                     conteudo_trabalhado=form.cleaned_data["conteudo_trabalhado"],
                     observacoes=form.cleaned_data["observacoes"],
+                    material_utilizado=form.cleaned_data["material_utilizado"],
+                    avaliacao_desempenho=form.cleaned_data["avaliacao_desempenho"],
+                    recomendacoes=form.cleaned_data["recomendacoes"],
                 )
             except ValidationError as exc:
                 for field, errs in exc.message_dict.items():
@@ -111,6 +120,35 @@ def registrar_aula_realizada(request, pk):
         form = RegistrarAulaForm()
 
     return render(request, "agenda/registrar.html", {"form": form, "aula": aula})
+
+
+@login_required
+def informar_detalhes(request, pk):
+    """
+    US-30339 / Task 32582 — Informar detalhes da aula realizada.
+
+    CA-DET-02: disponível apenas para aulas REALIZADA; para as demais, o
+    professor é avisado e devolvido à página da aula.
+    """
+    aula = get_object_or_404(Aula, pk=pk, professor=request.user)
+
+    if aula.status != Aula.Status.REALIZADA:
+        messages.warning(
+            request,
+            "Os detalhes complementares só podem ser informados em aulas realizadas.",
+        )
+        return redirect("agenda:detalhe", pk=aula.pk)
+
+    if request.method == "POST":
+        form = DetalhesAulaForm(request.POST, instance=aula)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Detalhes da aula salvos.")
+            return redirect("agenda:detalhe", pk=aula.pk)
+    else:
+        form = DetalhesAulaForm(instance=aula)
+
+    return render(request, "agenda/detalhes.html", {"form": form, "aula": aula})
 
 
 @login_required

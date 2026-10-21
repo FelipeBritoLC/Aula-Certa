@@ -8,6 +8,9 @@ from django.urls import reverse
 from .forms import AlunoFiltroForm, AlunoForm
 from .models import Aluno
 
+# A consulta completa do histórico, com filtros, é a US-30342 (Sprint 03).
+LIMITE_HISTORICO_FICHA = 5
+
 
 @login_required
 def cadastrar_aluno(request):
@@ -123,11 +126,23 @@ def listar_alunos(request):
 
 @login_required
 def detalhe_aluno(request, pk):
-    """Ficha consolidada básica do aluno (versão mínima da Sprint 01)."""
+    """
+    Ficha consolidada do aluno.
+
+    US-30322 (CA-COMP-03): dados acadêmicos e do responsável.
+    US-30339 / Task 32583 (CA-DET-03): histórico das últimas aulas
+    realizadas, com conteúdo, avaliação, material e recomendações.
+    """
     aluno = get_object_or_404(Aluno, pk=pk, professor=request.user)
     proximas_aulas = aluno.aulas.filter(status="AGENDADA").order_by("data_hora_inicio")[:5]
+    aulas_realizadas = aluno.aulas.filter(status="REALIZADA").order_by("-data_hora_inicio")
     return render(
         request,
         "alunos/detalhe.html",
-        {"aluno": aluno, "proximas_aulas": proximas_aulas},
+        {
+            "aluno": aluno,
+            "proximas_aulas": proximas_aulas,
+            "historico_aulas": aulas_realizadas[:LIMITE_HISTORICO_FICHA],
+            "total_aulas_realizadas": aulas_realizadas.count(),
+        },
     )

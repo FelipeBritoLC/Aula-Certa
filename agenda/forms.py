@@ -105,11 +105,59 @@ class RegistrarAulaForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
     )
 
+    # US-30339 / Task 32582 — detalhes complementares (opcionais, CA-DET-01)
+    material_utilizado = forms.CharField(
+        required=False,
+        label="Material utilizado",
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+    )
+    avaliacao_desempenho = forms.ChoiceField(
+        required=False,
+        label="Avaliação do desempenho",
+        choices=[("", "Não avaliado")] + list(Aula.Avaliacao.choices),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    recomendacoes = forms.CharField(
+        required=False,
+        label="Recomendações para as próximas aulas",
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+    )
+
     def clean_conteudo_trabalhado(self):
         conteudo = self.cleaned_data["conteudo_trabalhado"].strip()
         if len(conteudo) < 50:
             raise ValidationError("O conteúdo ministrado deve ter pelo menos 50 caracteres.")
         return conteudo
+
+
+class DetalhesAulaForm(forms.ModelForm):
+    """
+    US-30339 / Task 32582 — informar ou corrigir os detalhes complementares
+    de uma aula já realizada. A restrição a aulas REALIZADA (CA-DET-02) vive
+    em Aula.clean(), executado pelo ModelForm na validação.
+    """
+
+    class Meta:
+        model = Aula
+        fields = ["material_utilizado", "avaliacao_desempenho", "recomendacoes"]
+        labels = {
+            "material_utilizado": "Material utilizado",
+            "avaliacao_desempenho": "Avaliação do desempenho",
+            "recomendacoes": "Recomendações para as próximas aulas",
+        }
+        widgets = {
+            "material_utilizado": forms.Textarea(attrs={"rows": 3}),
+            "recomendacoes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["avaliacao_desempenho"].choices = [("", "Não avaliado")] + list(
+            Aula.Avaliacao.choices
+        )
+        for nome, field in self.fields.items():
+            classe = "form-select" if nome == "avaliacao_desempenho" else "form-control"
+            field.widget.attrs["class"] = classe
 
 
 class RegistrarFaltaForm(forms.Form):

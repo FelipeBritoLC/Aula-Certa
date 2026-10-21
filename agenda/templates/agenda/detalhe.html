@@ -18,6 +18,13 @@
         {% if aula.observacoes %}
             <p class="mb-1"><strong>Observações pedagógicas:</strong> {{ aula.observacoes }}</p>
         {% endif %}
+        {% if aula.status == "REALIZADA" %}
+            <hr>
+            <h6>Detalhes da aula</h6>
+            <p class="mb-1"><strong>Material utilizado:</strong> {{ aula.material_utilizado|default:"—"|linebreaksbr }}</p>
+            <p class="mb-1"><strong>Avaliação do desempenho:</strong> {{ aula.get_avaliacao_desempenho_display|default:"Não avaliado" }}</p>
+            <p class="mb-1"><strong>Recomendações:</strong> {{ aula.recomendacoes|default:"—"|linebreaksbr }}</p>
+        {% endif %}
         {% if aula.data_registro %}
             <p class="mb-1"><strong>Registrada em:</strong> {{ aula.data_registro|date:"d/m/Y H:i" }}</p>
         {% endif %}
@@ -31,6 +38,11 @@
 <a href="{% url 'agenda:editar' aula.pk %}" class="btn btn-outline-primary">Editar informações</a>
 <a href="{% url 'agenda:registrar' aula.pk %}" class="btn btn-success">Registrar como realizada</a>
 <a href="{% url 'agenda:registrar_falta' aula.pk %}" class="btn btn-warning">Registrar falta</a>
+{% endif %}
+{% if aula.status == "REALIZADA" %}
+<a href="{% url 'agenda:detalhes' aula.pk %}" class="btn btn-outline-primary">
+    {% if aula.tem_detalhes %}Editar detalhes{% else %}Informar detalhes{% endif %}
+</a>
 {% endif %}
 
 <a href="{% url 'agenda:listar' %}" class="btn btn-link">&larr; Voltar para a agenda</a>

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Detalhes da aula — AulaCerta{% endblock %}
+{% block content %}
+<h2 class="mb-2">Detalhes da aula realizada</h2>
+<p class="text-muted">Aluno: {{ aula.aluno.nome }} — {{ aula.data_hora_inicio|date:"d/m/Y H:i" }}</p>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label" for="{{ form.material_utilizado.id_for_label }}">{{ form.material_utilizado.label }}</label>
+            {{ form.material_utilizado }}
+            <div class="form-text">{{ form.material_utilizado.help_text }}</div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.avaliacao_desempenho.id_for_label }}">{{ form.avaliacao_desempenho.label }}</label>
+            {{ form.avaliacao_desempenho }}
+            {% for erro in form.avaliacao_desempenho.errors %}<div class="text-danger small">{{ erro }}</div>{% endfor %}
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="{{ form.recomendacoes.id_for_label }}">{{ form.recomendacoes.label }}</label>
+            {{ form.recomendacoes }}
+            <div class="form-text">{{ form.recomendacoes.help_text }}</div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Salvar detalhes</button>
+        <a href="{% url 'agenda:detalhe' aula.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

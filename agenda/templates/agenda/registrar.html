@@ -20,6 +20,21 @@
         {{ form.observacoes }}
         <div class="text-danger small">{{ form.observacoes.errors }}</div>
     </div>
+    <h5 class="mt-4 mb-3">Detalhes complementares <small class="text-muted">(opcional)</small></h5>
+    <div class="row g-3 mb-3">
+        <div class="col-md-8">
+            <label class="form-label" for="{{ form.material_utilizado.id_for_label }}">{{ form.material_utilizado.label }}</label>
+            {{ form.material_utilizado }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="{{ form.avaliacao_desempenho.id_for_label }}">{{ form.avaliacao_desempenho.label }}</label>
+            {{ form.avaliacao_desempenho }}
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="{{ form.recomendacoes.id_for_label }}">{{ form.recomendacoes.label }}</label>
+            {{ form.recomendacoes }}
+        </div>
+    </div>
     <button id="btn-concluir" type="submit" class="btn btn-success" disabled>Concluir</button>
     <a href="{% url 'agenda:detalhe' aula.pk %}" class="btn btn-outline-secondary">Cancelar</a>
 </form>

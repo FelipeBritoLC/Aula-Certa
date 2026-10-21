@@ -10,6 +10,13 @@
 <div class="alert alert-secondary">Aluno inativo — novos agendamentos estão bloqueados. As aulas já agendadas foram mantidas.</div>
 {% endif %}
 
+{% if aluno.is_menor_de_idade and not aluno.responsavel_nome %}
+<div class="alert alert-warning">
+    Aluno menor de idade sem responsável cadastrado.
+    <a href="{% url 'alunos:editar' aluno.pk %}" class="alert-link">Completar cadastro</a>
+</div>
+{% endif %}
+
 <div class="row">
     <div class="col-md-6">
         <div class="card mb-3">
@@ -18,8 +25,12 @@
                 <p class="mb-1"><strong>CPF:</strong> {{ aluno.cpf }}</p>
                 <p class="mb-1"><strong>Telefone:</strong> {{ aluno.telefone }}</p>
                 <p class="mb-1"><strong>E-mail:</strong> {{ aluno.email|default:"—" }}</p>
-                <p class="mb-1"><strong>Disciplina:</strong> {{ aluno.disciplina|default:"—" }}</p>
+                <p class="mb-1"><strong>Data de nascimento:</strong>
+                    {% if aluno.data_nascimento %}{{ aluno.data_nascimento|date:"d/m/Y" }} ({{ aluno.idade }} anos){% else %}—{% endif %}
+                </p>
+                <p class="mb-1"><strong>Endereço:</strong> {{ aluno.endereco|default:"—" }}</p>
                 <p class="mb-1"><strong>Situação:</strong> {{ aluno.get_situacao_display }}</p>
+                <p class="mb-1"><strong>Valor-hora:</strong> {% if aluno.valor_hora %}R$ {{ aluno.valor_hora }}{% else %}padrão do professor{% endif %}</p>
                 <p class="mb-0"><strong>Saldo devedor:</strong> R$ {{ aluno.saldo_devedor }}</p>
             </div>
         </div>
@@ -27,16 +38,41 @@
     <div class="col-md-6">
         <div class="card mb-3">
             <div class="card-body">
-                <h5 class="card-title">Próximas aulas</h5>
-                <ul class="list-group list-group-flush">
-                    {% for aula in proximas_aulas %}
-                        <li class="list-group-item">{{ aula.data_hora_inicio|date:"d/m/Y H:i" }} — {{ aula.get_modalidade_display }}</li>
-                    {% empty %}
-                        <li class="list-group-item text-muted">Nenhuma aula agendada.</li>
-                    {% endfor %}
-                </ul>
+                <h5 class="card-title">Dados acadêmicos</h5>
+                <p class="mb-1"><strong>Disciplina:</strong> {{ aluno.disciplina|default:"—" }}</p>
+                <p class="mb-1"><strong>Série/nível:</strong> {{ aluno.serie_nivel|default:"—" }}</p>
+                <p class="mb-1"><strong>Escola:</strong> {{ aluno.escola|default:"—" }}</p>
+                <p class="mb-0"><strong>Observações:</strong> {{ aluno.observacoes|default:"—"|linebreaksbr }}</p>
             </div>
         </div>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Responsável</h5>
+                {% if aluno.tem_responsavel %}
+                    <p class="mb-1"><strong>Nome:</strong> {{ aluno.responsavel_nome|default:"—" }}</p>
+                    <p class="mb-1"><strong>Parentesco:</strong> {{ aluno.responsavel_parentesco|default:"—" }}</p>
+                    <p class="mb-1"><strong>Telefone:</strong> {{ aluno.responsavel_telefone|default:"—" }}</p>
+                    <p class="mb-0"><strong>E-mail:</strong> {{ aluno.responsavel_email|default:"—" }}</p>
+                {% else %}
+                    <p class="text-muted mb-0">Nenhum responsável cadastrado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Próximas aulas</h5>
+        <ul class="list-group list-group-flush">
+            {% for aula in proximas_aulas %}
+                <li class="list-group-item">
+                    <a href="{% url 'agenda:detalhe' aula.pk %}">{{ aula.data_hora_inicio|date:"d/m/Y H:i" }}</a> — {{ aula.get_modalidade_display }}
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted">Nenhuma aula agendada.</li>
+            {% endfor %}
+        </ul>
     </div>
 </div>
 

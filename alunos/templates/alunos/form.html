@@ -34,7 +34,8 @@
         {% include "alunos/_campo.html" with campo=form.observacoes rotulo="Observações" col="col-12" %}
     </div>
 
-    <h5 class="mt-4 mb-3">Responsável</h5>
+    <h5 class="mt-4 mb-1">Responsável</h5>
+    <p class="text-muted small mb-3">Nome e telefone do responsável são obrigatórios para alunos menores de 18 anos.</p>
     <div class="row g-3">
         {% include "alunos/_campo.html" with campo=form.responsavel_nome rotulo="Nome do responsável" col="col-md-4" %}
         {% include "alunos/_campo.html" with campo=form.responsavel_telefone rotulo="Telefone do responsável" col="col-md-3" %}

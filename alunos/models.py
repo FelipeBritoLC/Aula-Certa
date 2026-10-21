@@ -6,6 +6,9 @@ from django.db import models
 from django.utils import timezone
 
 
+IDADE_MAIORIDADE = 18
+
+
 def validar_cpf_formato(value):
     """Valida que o CPF contém 11 dígitos numéricos (com ou sem máscara)."""
     digitos = re.sub(r"\D", "", value or "")
@@ -22,6 +25,11 @@ class Aluno(models.Model):
                em caso de duplicidade.
     CA-CAD-02: Nome, CPF e Contato (telefone) são obrigatórios.
     CA-CAD-03: sanitização (trim) do nome para remover espaços redundantes.
+
+    US-30322 "Informar dados complementares do aluno":
+    CA-COMP-01: data de nascimento não pode estar no futuro.
+    CA-COMP-02: aluno menor de 18 anos exige nome e telefone do responsável.
+    CA-COMP-03: dados acadêmicos e do responsável aparecem na ficha do aluno.
     """
 
     class Situacao(models.TextChoices):
@@ -99,6 +107,24 @@ class Aluno(models.Model):
         if not self.telefone:
             raise ValidationError({"telefone": "O contato (telefone) é obrigatório."})
 
+        # US-30322 — dados complementares
+        erros = {}
+        if self.responsavel_nome:
+            self.responsavel_nome = re.sub(r"\s+", " ", self.responsavel_nome).strip()
+        # CA-COMP-01: data de nascimento não pode estar no futuro
+        if self.data_nascimento and self.data_nascimento > timezone.localdate():
+            erros["data_nascimento"] = "A data de nascimento não pode estar no futuro."
+        # CA-COMP-02: aluno menor de idade exige nome e telefone do responsável
+        elif self.is_menor_de_idade():
+            if not self.responsavel_nome:
+                erros["responsavel_nome"] = "Informe o responsável: o aluno é menor de idade."
+            if not self.responsavel_telefone:
+                erros["responsavel_telefone"] = (
+                    "Informe o telefone do responsável: o aluno é menor de idade."
+                )
+        if erros:
+            raise ValidationError(erros)
+
         # CA-CAD-01: unicidade do CPF por professor
         if self.professor_id and self.cpf:
             duplicado = Aluno.objects.filter(
@@ -111,6 +137,30 @@ class Aluno(models.Model):
 
     def is_ativo(self):
         return self.situacao == self.Situacao.ATIVO
+
+    @property
+    def idade(self):
+        """Idade em anos completos, ou None se a data de nascimento não foi informada."""
+        if not self.data_nascimento:
+            return None
+        hoje = timezone.localdate()
+        nascimento = self.data_nascimento
+        fez_aniversario = (hoje.month, hoje.day) >= (nascimento.month, nascimento.day)
+        return hoje.year - nascimento.year - (0 if fez_aniversario else 1)
+
+    def is_menor_de_idade(self):
+        return self.idade is not None and self.idade < IDADE_MAIORIDADE
+
+    @property
+    def tem_responsavel(self):
+        return any(
+            [
+                self.responsavel_nome,
+                self.responsavel_telefone,
+                self.responsavel_email,
+                self.responsavel_parentesco,
+            ]
+        )
 
     def aulas_futuras_agendadas(self):
         """

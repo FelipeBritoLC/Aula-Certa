@@ -12,3 +12,5 @@ staticfiles
 Dockerfile
 docker-compose.yml
 render.yaml
+frontend_tests
+node_modules

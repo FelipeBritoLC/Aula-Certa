@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Registrar aula — AulaCerta{% endblock %}
 {% block content %}
 <h2 class="mb-4">Registrar aula realizada</h2>
@@ -39,23 +40,8 @@
     <a href="{% url 'agenda:detalhe' aula.pk %}" class="btn btn-outline-secondary">Cancelar</a>
 </form>
 
-<script>
-(() => {
-    const campo = document.getElementById("{{ form.conteudo_trabalhado.id_for_label }}");
-    const contador = document.getElementById("conteudo-contador");
-    const botao = document.getElementById("btn-concluir");
-    const minimo = 50;
+{% endblock %}
 
-    function atualizarValidacao() {
-        const quantidade = campo.value.trim().length;
-        contador.textContent = `${quantidade}/${minimo} caracteres`;
-        contador.classList.toggle("text-success", quantidade >= minimo);
-        contador.classList.toggle("text-danger", quantidade < minimo);
-        botao.disabled = quantidade < minimo;
-    }
-
-    campo.addEventListener("input", atualizarValidacao);
-    atualizarValidacao();
-})();
-</script>
+{% block extra_scripts %}
+<script src="{% static 'js/contador-caracteres.js' %}" defer></script>
 {% endblock %}

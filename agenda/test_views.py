@@ -106,6 +106,15 @@ class TestRegistroDeAulaPelaTela:
         resposta = logado.get(reverse("agenda:registrar", args=[aula.pk]))
         assert resposta.status_code == 302
 
+    def test_tela_liga_o_contador_de_caracteres(self, logado, professor):
+        """O campo traz a marcação lida por static/js/contador-caracteres.js."""
+        aula = criar_aula(professor, criar_aluno(professor))
+        html = logado.get(reverse("agenda:registrar", args=[aula.pk])).content.decode()
+        assert 'data-contador-minimo="50"' in html
+        assert 'data-contador-alvo="conteudo-contador"' in html
+        assert 'data-contador-botao="btn-concluir"' in html
+        assert "js/contador-caracteres.js" in html
+
     def test_conteudo_curto_mantem_na_tela(self, logado, professor):
         aula = criar_aula(professor, criar_aluno(professor))
         resposta = logado.post(reverse("agenda:registrar", args=[aula.pk]), {"conteudo_trabalhado": "pouco"})

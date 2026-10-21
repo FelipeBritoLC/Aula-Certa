@@ -96,6 +96,10 @@ class RegistrarAulaForm(forms.Form):
                 "class": "form-control",
                 "minlength": 50,
                 "aria-describedby": "conteudo-contador",
+                # static/js/contador-caracteres.js
+                "data-contador-minimo": 50,
+                "data-contador-alvo": "conteudo-contador",
+                "data-contador-botao": "btn-concluir",
             }
         ),
         label="Conteúdo ministrado (mínimo 50 caracteres)",

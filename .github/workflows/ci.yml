@@ -1,4 +1,4 @@
-# US-30358 / Task 32588 — Integração contínua.
+# US-30358 / Task 32588 — Integração contínua (back-end com pytest e front-end com Jest).
 #
 # A cada push ou pull request na main: sobe um PostgreSQL 16 (mesmo banco
 # da homologação), aplica as migrations, roda a suíte inteira com medição
@@ -79,3 +79,26 @@ jobs:
           name: cobertura
           path: coverage.xml
           if-no-files-found: ignore
+
+  front:
+    name: Testes de front-end (Jest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend_tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend_tests/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar testes com cobertura
+        run: npx jest --ci --coverage

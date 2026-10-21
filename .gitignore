@@ -12,3 +12,9 @@ staticfiles/*
 !staticfiles/.gitkeep
 .vercel
 .env*
+
+# Cobertura de testes (Task 32586)
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml

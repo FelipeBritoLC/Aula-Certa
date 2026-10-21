@@ -1,0 +1,22 @@
+# Task 32586 — medição de cobertura (pytest --cov).
+# Mede apenas o código da aplicação: testes, migrations e arquivos de
+# infraestrutura do Django ficam de fora do percentual.
+[run]
+source =
+    accounts
+    agenda
+    alunos
+    dashboard
+    financeiro
+omit =
+    */migrations/*
+    */tests.py
+    */test_*.py
+    */apps.py
+    */admin.py
+    */management/*
+
+[report]
+show_missing = True
+skip_covered = False
+precision = 1

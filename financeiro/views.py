@@ -70,7 +70,10 @@ def identificar_inadimplentes(request):
     """
     limite = timezone.localdate() - timedelta(days=DIAS_TOLERANCIA_INADIMPLENCIA)
 
-    filtro_dias = request.GET.get("min_dias")
+    # Valor não numérico ou negativo é ignorado (antes gerava erro 500).
+    filtro_dias = request.GET.get("min_dias", "").strip()
+    if not filtro_dias.isdigit():
+        filtro_dias = ""
 
     mensalidades_vencidas = (
         Mensalidade.objects.filter(

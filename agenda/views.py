@@ -155,6 +155,11 @@ def informar_detalhes(request, pk):
 def registrar_falta(request, pk):
     """US-30340 — Registrar falta do aluno."""
     aula = get_object_or_404(Aula, pk=pk, professor=request.user)
+
+    if aula.status != Aula.Status.AGENDADA:
+        messages.warning(request, "Somente aulas agendadas podem ter falta registrada.")
+        return redirect("agenda:detalhe", pk=aula.pk)
+
     if request.method == "POST":
         form = RegistrarFaltaForm(request.POST)
         if form.is_valid():

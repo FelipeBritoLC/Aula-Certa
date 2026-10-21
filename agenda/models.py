@@ -259,6 +259,10 @@ class Aula(models.Model):
 
     def registrar_falta(self, justificada, observacoes=""):
         """US-30340 — Registrar falta do aluno."""
+        if self.status != self.Status.AGENDADA:
+            raise ValidationError(
+                {"status": "Somente aulas agendadas podem ter falta registrada."}
+            )
         self.status = self.Status.FALTA
         self.tipo_falta = "JUSTIFICADA" if justificada else "NAO_JUSTIFICADA"
         self.observacoes = observacoes
